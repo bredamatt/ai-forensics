@@ -32,12 +32,12 @@ async fn main() -> Result<(), anyhow::Error> {
     let futex_kprobe: &mut KProbe = bpf.program_mut("futex").unwrap().try_into()?;
     futex_kprobe.load()?;
     // attach to start address
-    futex_kprobe.attach("futex", 0).unwrap().try_into()?;
+    futex_kprobe.attach("futex", 0)?;
 
     let malloc_kretprobe: &mut KProbe = bpf.program_mut("malloc").unwrap().try_into()?;
-    malloc_kretprobe.loac()?;
+    malloc_kretprobe.load()?;
     // attach to return address
-    malloc_kretprobe.attach("malloc", 0).unwrap().try_into()?;
+    malloc_kretprobe.attach("malloc", 0)?;
 
     info!("Waiting for Ctrl-C...");
     signal::ctrl_c().await?;
