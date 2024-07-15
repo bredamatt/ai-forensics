@@ -47,9 +47,28 @@ There are four things which must be done for this to work:
 
 ### What does this application do?
 
-This was an opportunity to dig a bit deeper into this topic and build something that is very interesting.
-Initially, it is about extracting, or monitoring the syscalls of interest.
-To do that, I used `tracepoints` in particular.
+I explored using both:
+- `kprobes`
+- `tracepoints`
+
+and found `kprobes` were more flexible, but `tracepoints` more stable as these were defined in the kernel.
+
+in this application to log whenever a Linux VM running a PyTorch Neural Network invokes the following syscalls:
+- `brk` for 
+- `futex`
+- `mmap`
+- `mmunmap`
+- `malloc` for memory allocations, happens on various points
+- `open` for opening file descriptors
+- `read` for reading from file descriptors
+- `write` for writing to file descriptors
+- `close` for closing file descriptors
+
+Since AI models:
+
+
+This was an opportunity to dig a bit deeper into this topic for as I think it is particularly relevant for safety and security engineering.
+
 
 ### Build Prerequisites
 
