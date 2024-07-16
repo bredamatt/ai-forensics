@@ -10,10 +10,10 @@ pub struct LogMessage {
     message: String,
 }
 
+/// Forwards LogMessages over ws channel through warp API
 async fn websocket_handler(ws: WebSocket, rx: mpsc::Receiver<LogMessage>) {
     let (mut tx_ws, _) = ws.split();
 
-    // Forward log messages to the websocket
     while let Some(log_message) = rx.recv().await {
         let log_message = serde_json::to_string(&log_message).unwrap();
         let log_message = Message::text(log_message);
@@ -23,7 +23,9 @@ async fn websocket_handler(ws: WebSocket, rx: mpsc::Receiver<LogMessage>) {
     }
 }
 
-/// Spawns a new thread
+/// Spawns a new thread and starts a warp API which exposes a ws route.
+/// Whenever someone subscribes to this endpoint successfully the websocket handler
+/// forwards eBPF log messages over the channel.
 pub fn start_websocket_server(tx: mpsc::Sender<LogMessage>) {
     std::thread::spawn(async move || {
         let route = warp::path("ws")
