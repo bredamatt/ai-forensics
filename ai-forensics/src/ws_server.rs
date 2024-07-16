@@ -1,3 +1,4 @@
+use futures_util::SinkExt;
 use tokio::sync::mpsc;
 use log::error;
 use serde::Serialize;
@@ -12,7 +13,7 @@ pub struct LogMessage {
 }
 
 /// Forwards LogMessages over ws channel through warp API
-async fn websocket_handler(ws: WebSocket, rx: mpsc::Receiver<LogMessage>) {
+async fn websocket_handler(ws: WebSocket, rx: mpsc::UnboundedReceiver<LogMessage>) {
     let (mut tx_ws, _) = ws.split();
 
     while let Some(log_message) = rx.recv().await {
@@ -27,12 +28,12 @@ async fn websocket_handler(ws: WebSocket, rx: mpsc::Receiver<LogMessage>) {
 /// Spawns a new thread and starts a warp API which exposes a ws route.
 /// Whenever someone subscribes to this endpoint successfully the websocket handler
 /// forwards eBPF log messages over the channel.
-pub fn start_websocket_server(tx: mpsc::Sender<LogMessage>) {
+pub fn start_websocket_server(tx: mpsc::UnboundedSender<LogMessage>) {
     std::thread::spawn(async move || {
         let route = warp::path("ws")
             .and(warp::ws())
             .map(move |ws: warp::ws::Ws| {
-                let (client_tx, client_rx) = mpsc::channel();
+                let (client_tx, client_rx) = mpsc::unbounded_channel();
                 let tx = tx.clone();
                 tokio::spawn(async move {
                     if tx.send(LogMessage { level: "error".to_string(), message: "error".to_string() }).await.is_err() {

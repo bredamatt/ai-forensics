@@ -24,8 +24,8 @@ async fn main() -> Result<(), anyhow::Error> {
         warn!("failed to initialize eBPF logger: {}", e);
     }
 
-    let (tx_clients, mut rx_clients) = mpsc::channel();
-    let (tx_logs, rx_logs) = mpsc::channel();
+    let (tx_clients, mut rx_clients) = mpsc::unbounded_channel();
+    let (tx_logs, rx_logs) = mpsc::unbounded_channel();
     start_websocket_server(tx_clients);
 
     let tracepoints = [
