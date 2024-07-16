@@ -54,17 +54,13 @@ I explored using both:
 and found `kprobes` were more flexible, but `tracepoints` more stable as these were defined in the kernel.
 
 in this application to log whenever a Linux VM running a PyTorch Neural Network invokes the following syscalls:
-- `brk` for 
-- `futex`
-- `mmap`
-- `mmunmap`
-- `malloc` for memory allocations, happens on various points
-- `open` for opening file descriptors
-- `read` for reading from file descriptors
-- `write` for writing to file descriptors
-- `close` for closing file descriptors
-
-Since AI models:
+- `brk` for controlling memory allocated to the data segment of a  process
+- `futex` synchronisation between threads in user space 
+- `mmap` maps files or devices into memory 
+- `mmunmap` unmaps a mapped region of memory,. previously mapped my mmap
+- `read` for reading from file descriptors into a buffer 
+- `write` for writing to file descriptors from a buffer
+- `close` for closing open file descriptors
 
 
 This was an opportunity to dig a bit deeper into this topic for as I think it is particularly relevant for safety and security engineering.
