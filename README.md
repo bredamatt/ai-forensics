@@ -29,8 +29,16 @@ The user-space system can then receive results back from this third-party servic
 ### How does eBPF work?
 
 The way this program does what it does is primarily because of eBPF.
-However, `aya` makes eBPF engineering more intuitive.
+Details about eBPF can be found here:
+- https://docs.cilium.io/en/latest/bpf/architecture/
+- https://ebpf.io/what-is-ebpf/
+- https://en.wikipedia.org/wiki/EBPF
+- https://www.kernel.org/doc/html/latest/bpf/standardization/instruction-set.html
 
+However, `aya` makes eBPF engineering more intuitive.
+Additionally, I used `cargo-generate` to generate a new project based off of `aya`'s template, and found this very helpful.
+
+### How does `aya` work? 
 Fundamentally, an `aya` user-space program interacts with kernel-space eBPF code via the use of special purpose maps.
 
 There are four things which must be done for this to work:
