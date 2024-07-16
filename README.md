@@ -13,7 +13,7 @@ and hence functionality can be extended based upon the types of investigation an
 
 The syscalls were identified using the `strace` tool on an `Ubuntu 22.04.3 aarch64` VM running on my Macbook,
 whilst executing a very simple PyTorch neural network.
-In particular I used the following command:
+I used the following command:
 ```
 $ cd models/
 $ strace -f -e trace=open,read,close,mmap,munmap,brk,futex python predictions.py
