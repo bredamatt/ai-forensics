@@ -13,7 +13,7 @@ pub struct LogMessage {
 }
 
 /// Forwards LogMessages over ws channel through warp API
-async fn websocket_handler(ws: WebSocket, rx: mpsc::UnboundedReceiver<LogMessage>) {
+async fn websocket_handler(ws: WebSocket, mut rx: mpsc::UnboundedReceiver<LogMessage>) {
     let (mut tx_ws, _) = ws.split();
 
     while let Some(log_message) = rx.recv().await {
@@ -29,7 +29,7 @@ async fn websocket_handler(ws: WebSocket, rx: mpsc::UnboundedReceiver<LogMessage
 /// Whenever someone subscribes to this endpoint successfully the websocket handler
 /// forwards eBPF log messages over the channel.
 pub fn start_websocket_server(tx: mpsc::UnboundedSender<LogMessage>) {
-    std::thread::spawn(async move || {
+    tokio::task::spawn(async move || {
         let route = warp::path("ws")
             .and(warp::ws())
             .map(move |ws: warp::ws::Ws| {
