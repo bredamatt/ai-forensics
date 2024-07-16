@@ -1,13 +1,8 @@
-mod ws_server;
-
 use aya::programs::{KProbe, TracePoint};
 use aya::{include_bytes_aligned, Bpf};
 use aya_log::BpfLogger;
-use futures_util::SinkExt;
 use log::{debug, error, info, warn};
 use tokio::signal;
-use tokio::sync::mpsc;
-use crate::ws_server::start_websocket_server;
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
@@ -24,10 +19,6 @@ async fn main() -> Result<(), anyhow::Error> {
     if let Err(e) = BpfLogger::init(&mut bpf) {
         warn!("failed to initialize eBPF logger: {}", e);
     }
-
-    let (tx_clients, mut rx_clients) = mpsc::unbounded_channel();
-    let (tx_logs, mut rx_logs) = mpsc::unbounded_channel();
-    start_websocket_server(tx_clients);
 
     let tracepoints = [
         "sys_enter_read",
@@ -51,30 +42,6 @@ async fn main() -> Result<(), anyhow::Error> {
     }
 
     info!("Waiting for Ctrl-C...");
-
-    // Spawn a task to distribute log messages to all websocket clients
-    tokio::spawn(async move {
-        let mut clients = Vec::new();
-        loop {
-            tokio::select! {
-                Some(client_tx) = rx_clients.recv() => {
-                    clients.push(client_tx);
-                }
-                Some(log_message) = rx_logs.recv() => {
-                    let mut broken_clients = Vec::new();
-                    for (index, mut client_tx) in clients.iter().enumerate() {
-                        if client_tx.send(log_message.clone()).await.is_err() {
-                            broken_clients.push(index);
-                        }
-                    }
-                    for &index in broken_clients.iter().rev() {
-                        clients.swap_remove(index);
-                    }
-                }
-            }
-        }
-    }).await?;
-
 
     signal::ctrl_c().await?;
     info!("Exiting...");
