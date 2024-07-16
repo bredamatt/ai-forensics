@@ -20,7 +20,7 @@ async fn websocket_handler(ws: WebSocket, mut rx: mpsc::UnboundedReceiver<LogMes
         let log_message = serde_json::to_string(&log_message).unwrap();
         let log_message = Message::text(log_message);
         if tx_ws.send(log_message).await.is_err() {
-            error!("Error when sending LogMessage: {:?}", log_message);
+            error!("Error when sending LogMessage");
         }
     }
 }
@@ -29,14 +29,14 @@ async fn websocket_handler(ws: WebSocket, mut rx: mpsc::UnboundedReceiver<LogMes
 /// Whenever someone subscribes to this endpoint successfully the websocket handler
 /// forwards eBPF log messages over the channel.
 pub fn start_websocket_server(tx: mpsc::UnboundedSender<LogMessage>) {
-    tokio::task::spawn(async move || {
+    tokio::task::spawn(move || {
         let route = warp::path("ws")
             .and(warp::ws())
             .map(move |ws: warp::ws::Ws| {
                 let (client_tx, client_rx) = mpsc::unbounded_channel();
                 let tx = tx.clone();
                 tokio::spawn(async move {
-                    if tx.send(LogMessage { level: "error".to_string(), message: "error".to_string() }).await.is_err() {
+                    if tx.send(LogMessage { level: "error".to_string(), message: "error".to_string() }).is_err() {
                         error!("Failed to register websocket client");
                     }
                 });
@@ -44,6 +44,6 @@ pub fn start_websocket_server(tx: mpsc::UnboundedSender<LogMessage>) {
             });
 
         warp::serve(route)
-            .run(([127, 0, 0, 1], 3030)).await
+            .run(([127, 0, 0, 1], 3030))
     });
 }

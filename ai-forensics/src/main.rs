@@ -73,7 +73,7 @@ async fn main() -> Result<(), anyhow::Error> {
                 }
             }
         }
-    });
+    }).await?;
 
 
     signal::ctrl_c().await?;
