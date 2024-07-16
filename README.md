@@ -1,24 +1,37 @@
 # ai-forensics
 
 This repository contains the code for a Linux user-space system that monitors kernel-level system calls.
-
 In this case, the syscalls of particular interest are going to be those most commonly used by AI models.
 
 Note that the tool can capture the syscalls executed both during:
 - training
 - runtime 
 
-and hence can be extended based upon the types of investigation and control system that wants to be built, or performed.
+and hence functionality can be extended based upon the types of investigation and control system that wants to be built, or performed.
 
 ### Identification process
 
 The syscalls were identified using the `strace` tool on an `Ubuntu 22.04.3 aarch64` VM running on my Macbook,
 whilst executing a very simple PyTorch neural network.
+In particular I used the following command:
+```
+$ cd models/
+$ strace -f -e trace=open,read,close,mmap,munmap,brk,futex python predictions.py
+```
+
+There is a lot more to be done in identifying relevant syscalls for monitoring purposes.
+In particular, more work needs to be done to map the pids associated with a model prediction process to the eBPF system, so that 
+the right analysis can be made from the tracepoints.
+
+Future work should include piping these tracepoints logs out of the kernel-space to some log-analyser for classification purposes.
+The user-space system can then receive results back from this third-party service and potentially stop the AI agent if necessary.
 
 ### How does eBPF work?
 
-This tool is dependent upon `aya`, a Rust crate designed for simplifying eBPF development.
-Fundamentally, an `aya` program interacts with kernel-space eBPF code via the use of special purpose maps that are accessed from the user-space.
+The way this program does what it does is primarily because of eBPF.
+However, `aya` makes eBPF engineering more intuitive.
+
+Fundamentally, an `aya` user-space program interacts with kernel-space eBPF code via the use of special purpose maps.
 
 There are four things which must be done for this to work:
 **1. Loading eBPF Programs in User-Space**:
@@ -51,9 +64,9 @@ I explored using both:
 - `kprobes`
 - `tracepoints`
 
-and found `kprobes` were more flexible, but `tracepoints` more stable as these were defined in the kernel.
+and found `kprobes` were more flexible, but `tracepoints` more stable as these were pre-defined in the kernel.
 
-in this application to log whenever a Linux VM running a PyTorch Neural Network invokes the following syscalls:
+I used a local Linux VM running a PyTorch Neural Network, and primarily saw the following syscalls:
 - `brk` for controlling memory allocated to the data segment of a  process
 - `futex` synchronisation between threads in user space 
 - `mmap` maps files or devices into memory 
@@ -62,8 +75,7 @@ in this application to log whenever a Linux VM running a PyTorch Neural Network 
 - `write` for writing to file descriptors from a buffer
 - `close` for closing open file descriptors
 
-
-This was an opportunity to dig a bit deeper into this topic for as I think it is particularly relevant for safety and security engineering.
+Therefore, I added the tracepoints for these specifically.
 
 
 ### Build Prerequisites
@@ -75,9 +87,9 @@ This was an opportunity to dig a bit deeper into this topic for as I think it is
 
 For details about `bpf-linker` see: https://github.com/aya-rs/bpf-linker.
 
-
-
 ### Build eBPF
+
+This will only build the eBPF code:
 
 ```bash
 cargo xtask build-ebpf
