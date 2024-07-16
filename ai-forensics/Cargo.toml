@@ -16,6 +16,7 @@ tokio = { version = "1.25", features = ["macros", "rt", "rt-multi-thread", "net"
 serde_json = "1.0.120"
 warp = "0.3.7"
 serde = { version = "1.0.204", features = ["derive"] }
+futures-util = "0.3.30"
 
 [[bin]]
 name = "ai-forensics"

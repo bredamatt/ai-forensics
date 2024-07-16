@@ -1,8 +1,9 @@
-use std::sync::mpsc;
+use tokio::sync::mpsc;
 use log::error;
 use serde::Serialize;
 use warp::Filter;
 use warp::ws::{Message, WebSocket};
+use futures_util::stream::StreamExt;
 
 #[derive(Serialize)]
 pub struct LogMessage {

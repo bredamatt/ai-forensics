@@ -1,11 +1,11 @@
 mod ws_server;
 
-use std::sync::mpsc;
 use aya::programs::{KProbe, TracePoint};
 use aya::{include_bytes_aligned, Bpf};
 use aya_log::BpfLogger;
 use log::{debug, error, info, warn};
 use tokio::signal;
+use tokio::sync::mpsc;
 use crate::ws_server::start_websocket_server;
 
 #[tokio::main]
