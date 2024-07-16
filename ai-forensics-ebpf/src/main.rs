@@ -26,36 +26,6 @@ fn try_kretprobe_malloc(ctx: ProbeContext) -> Result<u32, u32> {
     Ok(0)
 }
 
-/* 
-#[kprobe]
-pub fn futex_wait(ctx: ProbeContext) -> u32 {
-    match try_futex_wait(ctx) {
-        Ok(ret) => ret,
-        Err(ret) => ret,
-    }
-}
-
-fn try_futex_wait(ctx: ProbeContext) -> Result<u32, u32> {
-    info!(&ctx, "kprobe_futex invoked");
-    Ok(0)
-}
-
-
-#[kprobe]
-pub fn futex_wake(ctx: ProbeContext) -> u32 {
-    match try_futex_wake(ctx) {
-        Ok(ret) => ret,
-        Err(ret) => ret,
-    }
-}
-
-fn try_futex_wake(ctx: ProbeContext) -> Result<u32, u32> {
-    info!(&ctx, "kprobe_futex invoked");
-    Ok(0)
-}
-
-*/ 
-
 
 #[map]
 static mut START_TIMES: HashMap<u64, u64> = HashMap::with_max_entries(1024, BPF_ANY);
@@ -93,7 +63,7 @@ unsafe fn try_sys_exit_futex(ctx: TracePointContext) -> Result<u32, i64> {
     let end_time = bpf_ktime_get_ns();
     
     let duration = end_time - start_time;
-    bpf_printk!(b"futex call duration: %llu ns\n", duration);
+    info!(&ctx, "futex call duration for pid {} was {} ns", pid, duration);
     
     START_TIMES.remove(&pid).map_err(|_| 1)?;
     
@@ -126,6 +96,111 @@ fn try_sys_exit_mmap(ctx: TracePointContext) -> Result<u32, u32> {
     info!(&ctx, "sys_exit_mmap invoked");
     Ok(0)
 }
+
+#[tracepoint]
+pub fn sys_enter_read(ctx: TracePointContext) -> u32 {
+    match try_sys_enter_read(ctx) {
+        Ok(ret) => ret,
+        Err(ret) => ret,
+    }
+}
+
+fn try_sys_enter_read(ctx: TracePointContext) -> Result<u32, u32> {
+    info!(&ctx, "sys_enter_read invoked");
+    Ok(0)
+}
+
+#[tracepoint]
+pub fn sys_exit_read(ctx: TracePointContext) -> u32 {
+    match try_sys_exit_read(ctx) {
+        Ok(ret) => ret,
+        Err(ret) => ret,
+    }
+}
+
+fn try_sys_exit_read(ctx: TracePointContext) -> Result<u32, u32> {
+    info!(&ctx, "sys_exit_read invoked");
+    Ok(0)
+}
+
+#[tracepoint]
+pub fn sys_enter_close(ctx: TracePointContext) -> u32 {
+    match try_sys_enter_close(ctx) {
+        Ok(ret) => ret,
+        Err(ret) => ret,
+    }
+}
+
+fn try_sys_enter_close(ctx: TracePointContext) -> Result<u32, u32> {
+    info!(&ctx, "sys_enter_close invoked");
+    Ok(0)
+}
+
+#[tracepoint]
+pub fn sys_exit_close(ctx: TracePointContext) -> u32 {
+    match try_sys_exit_close(ctx) {
+        Ok(ret) => ret,
+        Err(ret) => ret,
+    }
+}
+
+fn try_sys_exit_close(ctx: TracePointContext) -> Result<u32, u32> {
+    info!(&ctx, "sys_exit_close invoked");
+    Ok(0)
+}
+
+#[tracepoint]
+pub fn sys_enter_munmap(ctx: TracePointContext) -> u32 {
+    match try_sys_enter_munmap(ctx) {
+        Ok(ret) => ret,
+        Err(ret) => ret,
+    }
+}
+
+fn try_sys_enter_munmap(ctx: TracePointContext) -> Result<u32, u32> {
+    info!(&ctx, "sys_enter_munmap invoked");
+    Ok(0)
+}
+
+#[tracepoint]
+pub fn sys_exit_munmap(ctx: TracePointContext) -> u32 {
+    match try_sys_exit_munmap(ctx) {
+        Ok(ret) => ret,
+        Err(ret) => ret,
+    }
+}
+
+fn try_sys_exit_munmap(ctx: TracePointContext) -> Result<u32, u32> {
+    info!(&ctx, "sys_exit_munmap invoked");
+    Ok(0)
+}
+
+#[tracepoint]
+pub fn sys_enter_brk(ctx: TracePointContext) -> u32 {
+    match try_sys_enter_brk(ctx) {
+        Ok(ret) => ret,
+        Err(ret) => ret,
+    }
+}
+
+fn try_sys_enter_brk(ctx: TracePointContext) -> Result<u32, u32> {
+    info!(&ctx, "sys_enter_brk invoked");
+    Ok(0)
+}
+
+#[tracepoint]
+pub fn sys_exit_brk(ctx: TracePointContext) -> u32 {
+    match try_sys_exit_brk(ctx) {
+        Ok(ret) => ret,
+        Err(ret) => ret,
+    }
+}
+
+fn try_sys_exit_brk(ctx: TracePointContext) -> Result<u32, u32> {
+    info!(&ctx, "sys_exit_brk invoked");
+    Ok(0)
+}
+
 
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
