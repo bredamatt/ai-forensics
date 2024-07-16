@@ -1,17 +1,13 @@
 use aya::programs::{KProbe, TracePoint};
 use aya::{include_bytes_aligned, Bpf};
 use aya_log::BpfLogger;
-use log::{info, warn, debug};
+use log::{info, error, warn, debug};
 use tokio::signal;
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
     env_logger::init();
 
-    // This will include your eBPF object file as raw bytes at compile-time and load it at
-    // runtime. This approach is recommended for most real-world use cases. If you would
-    // like to specify the eBPF program at runtime rather than at compile-time, you can
-    // reach for `Bpf::load_file` instead.
     #[cfg(debug_assertions)]
     let mut bpf = Bpf::load(include_bytes_aligned!(
         "../../target/bpfel-unknown-none/debug/ai-forensics"
@@ -21,25 +17,55 @@ async fn main() -> Result<(), anyhow::Error> {
         "../../target/bpfel-unknown-none/release/ai-forensics"
     ))?;
     if let Err(e) = BpfLogger::init(&mut bpf) {
-        // This can happen if you remove all log statements from your eBPF program.
         warn!("failed to initialize eBPF logger: {}", e);
     }
 
-    let mmap_tracepoint: &mut TracePoint = bpf.program_mut("mmap").unwrap().try_into()?;
-    mmap_tracepoint.load()?;
-    mmap_tracepoint.attach("syscall", "mmap")?;
+    let sys_enter_mmap: &mut TracePoint = bpf.program_mut("sys_enter_mmap").unwrap().try_into()?;
+    sys_enter_mmap.load()?;
+    sys_enter_mmap.attach("syscalls", "sys_enter_mmap")?;
 
-    let futex_kprobe: &mut KProbe = bpf.program_mut("futex").unwrap().try_into()?;
-    futex_kprobe.load()?;
+    
+    let sys_enter_futex_tracepoint: &mut TracePoint = bpf.program_mut("sys_enter_futex").unwrap().try_into()?;
+    if let Err(e) = sys_enter_futex_tracepoint.load() {
+        error!("failed to load sys_enter_futex tracepoint: {}", e);
+        return Err(e.into());
+    }
+    if let Err(e) = sys_enter_futex_tracepoint.attach("syscalls", "sys_enter_futex") {
+        error!("failed to attach sys_enter_futex tracepoint: {}", e);
+        return Err(e.into());
+    }
+
+    let sys_exit_futex_tracepoint: &mut TracePoint = bpf.program_mut("sys_exit_futex").unwrap().try_into()?;
+    if let Err(e) = sys_exit_futex_tracepoint.load() {
+        error!("failed to load sys_exit_futex tracepoint: {}", e);
+        return Err(e.into());
+    }
+    if let Err(e) = sys_exit_futex_tracepoint.attach("syscalls", "sys_exit_futex") {
+        error!("failed to attach sys_exit_futex tracepoint: {}", e);
+        return Err(e.into());
+    }
+
+    /* 
+    let futex_wait: &mut KProbe = bpf.program_mut("futex_wait").unwrap().try_into()?;
+    futex_wait.load()?;
     // attach to start address
-    futex_kprobe.attach("futex", 0)?;
+    futex_wait.attach("futex", 0)?;
 
-    let malloc_kretprobe: &mut KProbe = bpf.program_mut("malloc").unwrap().try_into()?;
+    let futex_wake: &mut KProbe = bpf.program_mut("futex_wake").unwrap().try_into()?;
+    futex_wake.load()?;
+    // attach to start address
+    futex_wake.attach("futex", 0)?;
+    
+
+    let malloc_kretprobe: &mut KProbe = bpf.program_mut("kretprobe_malloc").unwrap().try_into()?;
     malloc_kretprobe.load()?;
     // attach to return address
     malloc_kretprobe.attach("malloc", 0)?;
 
+    */ 
+
     info!("Waiting for Ctrl-C...");
+    
     signal::ctrl_c().await?;
     info!("Exiting...");
 
