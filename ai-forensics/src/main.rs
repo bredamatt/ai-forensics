@@ -1,7 +1,7 @@
-use aya::programs::{KProbe, TracePoint};
+use aya::programs::{TracePoint};
 use aya::{include_bytes_aligned, Bpf};
 use aya_log::BpfLogger;
-use log::{debug, error, info, warn};
+use log::{info, warn};
 use tokio::signal;
 
 #[tokio::main]
