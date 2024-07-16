@@ -3,8 +3,8 @@
 
 use aya_ebpf::{
     bindings::BPF_ANY,
-    helpers::{bpf_get_current_pid_tgid, bpf_ktime_get_ns, bpf_printk},
-    macros::{kprobe, kretprobe, map, tracepoint},
+    helpers::{bpf_get_current_pid_tgid, bpf_ktime_get_ns},
+    macros::{kretprobe, map, tracepoint},
     maps::HashMap,
     programs::{ProbeContext, TracePointContext},
 };
@@ -36,7 +36,7 @@ pub fn sys_enter_futex(ctx: TracePointContext) -> u32 {
     }
 }
 
-unsafe fn try_sys_enter_futex(ctx: TracePointContext) -> Result<u32, i64> {
+unsafe fn try_sys_enter_futex(_ctx: TracePointContext) -> Result<u32, i64> {
     let pid = bpf_get_current_pid_tgid();
     let start_time = bpf_ktime_get_ns();
 
